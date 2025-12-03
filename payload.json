@@ -1,0 +1,16 @@
+{
+    "contents": [
+        {
+            "parts": [
+                {
+                    "text": "Generate an image of a cute cat"
+                }
+            ]
+        }
+    ],
+    "generationConfig": {
+        "responseModalities": [
+            "IMAGE"
+        ]
+    }
+}

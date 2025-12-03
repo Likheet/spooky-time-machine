@@ -15,9 +15,9 @@ export class ImageGeneratorService {
     // In browser: import.meta.env.VITE_GEMINI_API_KEY
     // In Node.js tests: pass apiKey directly to constructor
     this.apiKey = apiKey || (import.meta.env?.VITE_GEMINI_API_KEY as string) || '';
-    // Using Imagen 3 for image generation
-    this.model = 'imagen-3.0-generate-002';
-    this.apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:predict`;
+    // Using Gemini 2.0 Flash Experimental for free tier image generation
+    this.model = 'gemini-2.0-flash-exp';
+    this.apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent`;
   }
 
   /**
@@ -66,22 +66,13 @@ export class ImageGeneratorService {
     }
 
     try {
-      // Make API request to Imagen
-      const response = await axios.post<{
-        predictions?: Array<{
-          bytesBase64Encoded: string;
-          mimeType: string;
-        }>;
-        error?: { code: number; message: string; status: string };
-      }>(
+      // Make API request to Gemini 2.0 Flash
+      const response = await axios.post(
         `${this.apiEndpoint}?key=${this.apiKey}`,
         {
-          instances: [{ prompt }],
-          parameters: {
-            sampleCount: 1,
-            aspectRatio: '16:9',
-            safetyFilterLevel: 'block_few',
-            personGeneration: 'allow_adult',
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            responseModalities: ["IMAGE"],
           },
         },
         {
@@ -93,7 +84,7 @@ export class ImageGeneratorService {
       );
 
       // Parse response
-      return this.parseImagenResponse(response.data, prompt);
+      return this.parseGeminiResponse(response.data, prompt);
     } catch (error) {
       // Handle different error types
       throw this.handleError(error);
@@ -101,13 +92,10 @@ export class ImageGeneratorService {
   }
 
   /**
-   * Parse Imagen API response
+   * Parse Gemini API response
    */
-  private parseImagenResponse(
-    response: {
-      predictions?: Array<{ bytesBase64Encoded: string; mimeType: string }>;
-      error?: { code: number; message: string; status: string };
-    },
+  private parseGeminiResponse(
+    response: any,
     prompt: string
   ): GeneratedImage {
     if (response.error) {
@@ -120,7 +108,8 @@ export class ImageGeneratorService {
       throw error;
     }
 
-    if (!response.predictions || response.predictions.length === 0) {
+    const candidate = response.candidates?.[0];
+    if (!candidate) {
       const error: ApiError = {
         message: 'No image generated. The API returned an empty response.',
         code: 500,
@@ -130,8 +119,24 @@ export class ImageGeneratorService {
       throw error;
     }
 
-    const prediction = response.predictions[0];
-    const imageUrl = `data:${prediction.mimeType || 'image/png'};base64,${prediction.bytesBase64Encoded}`;
+    // Look for inline data in parts
+    const imagePart = candidate.content?.parts?.find((part: any) => part.inlineData);
+
+    if (!imagePart) {
+      // Check if there is text rejection
+      const textPart = candidate.content?.parts?.find((part: any) => part.text);
+      const message = textPart ? textPart.text : 'The model did not generate an image.';
+
+      const error: ApiError = {
+        message: message,
+        code: 400,
+        status: 'INVALID_ARGUMENT',
+      };
+      this.logError('No Image In Response', error);
+      throw error;
+    }
+
+    const imageUrl = `data:${imagePart.inlineData.mimeType || 'image/png'};base64,${imagePart.inlineData.data}`;
 
     return {
       url: imageUrl,
@@ -139,7 +144,7 @@ export class ImageGeneratorService {
       timestamp: new Date(),
       metadata: {
         model: this.model,
-        mimeType: prediction.mimeType || 'image/png',
+        mimeType: imagePart.inlineData.mimeType || 'image/png',
       },
     };
   }
