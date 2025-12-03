@@ -54,19 +54,14 @@ class AudioManager {
     const loadPromises = soundEffects.map((soundId) =>
       this.loadSound(soundId as SoundEffect)
     );
-
-    try {
-      await Promise.all(loadPromises);
-    } catch (error) {
-      console.warn('Some audio files failed to load:', error);
-    }
+    await Promise.all(loadPromises);
   }
 
   /**
    * Load a single sound effect
    */
   private async loadSound(soundId: SoundEffect): Promise<void> {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       const audio = new Audio(`/audio/${soundId}.mp3`);
       audio.preload = 'auto';
 
@@ -76,8 +71,9 @@ class AudioManager {
       });
 
       audio.addEventListener('error', () => {
-        console.warn(`Failed to load audio: ${soundId}`);
-        reject(new Error(`Failed to load audio: ${soundId}`));
+        // Just warn and resolve - don't block the app
+        console.warn(`Audio file not available: ${soundId}`);
+        resolve();
       });
 
       // Resolve after timeout to prevent blocking

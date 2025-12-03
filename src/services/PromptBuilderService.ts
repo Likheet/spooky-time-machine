@@ -25,20 +25,8 @@ export class PromptBuilderService {
     // Generate historical context
     const historicalContext = this.getHistoricalContext(time, locationName);
     
-    // Format the complete prompt
-    const prompt = `Generate a photorealistic image of ${locationName} as it appeared in ${time.displayName}.
-
-Location: ${location.latitude.toFixed(4)}°, ${location.longitude.toFixed(4)}° - ${locationName}
-Time Period: ${time.year} ${time.era || 'CE'}
-Historical Context: ${historicalContext}
-
-Style: Historically accurate, photorealistic, atmospheric and moody lighting appropriate for the time period. 
-Add a subtle eerie, haunting quality to the atmosphere - overcast skies, dramatic shadows, or twilight ambiance.
-Perspective: Ground-level view showing architecture, landscape, and daily life of the era.
-Details: Include period-appropriate clothing, architecture, technology, and environmental conditions.
-Mood: Mysterious and atmospheric, as if viewing through a portal in time.
-
-Model: gemini-3-pro-image-preview`;
+    // Format the prompt for image generation
+    const prompt = `A photorealistic historical scene of ${locationName} in ${time.displayName}. ${historicalContext}. Atmospheric lighting with dramatic shadows, moody twilight sky, cinematic composition. Historically accurate architecture, clothing, and technology of the era. High detail, professional photography style.`;
 
     return prompt;
   }

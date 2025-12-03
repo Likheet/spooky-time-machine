@@ -101,6 +101,14 @@ export function ImageDisplay({ image, location, time }: ImageDisplayProps) {
         />
       </div>
       
+      {/* Description (if available) */}
+      {image.metadata?.description && (
+        <div className="image-description">
+          <h3 className="description-title">Historical Vision</h3>
+          <p className="description-text">{image.metadata.description}</p>
+        </div>
+      )}
+
       {/* Metadata display */}
       <div className="image-metadata">
         <div className="metadata-section">

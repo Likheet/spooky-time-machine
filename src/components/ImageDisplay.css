@@ -163,6 +163,38 @@
   text-shadow: 0 0 10px var(--color-red-glow);
 }
 
+/* Image Description */
+.image-description {
+  width: 100%;
+  max-width: 800px;
+  background: rgba(10, 10, 10, 0.95);
+  border: 2px solid var(--color-orange-pumpkin, #ff6600);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  box-shadow: 
+    0 0 20px rgba(255, 102, 0, 0.3),
+    inset 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+.description-title {
+  margin: 0 0 var(--spacing-md) 0;
+  color: var(--color-orange-pumpkin, #ff6600);
+  font-size: 1.3rem;
+  text-align: center;
+  text-shadow: 0 0 10px rgba(255, 102, 0, 0.5);
+  font-family: 'Georgia', serif;
+}
+
+.description-text {
+  margin: 0;
+  color: var(--color-gray-light, #e0e0e0);
+  font-size: 1rem;
+  line-height: 1.7;
+  font-family: 'Georgia', serif;
+  text-align: justify;
+  white-space: pre-wrap;
+}
+
 /* Image Metadata */
 .image-metadata {
   display: flex;

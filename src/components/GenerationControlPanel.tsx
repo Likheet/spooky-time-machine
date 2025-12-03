@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Coordinates, TimeSelection, GeneratedImage, ApiError } from '../types';
 import { promptBuilderService } from '../services/PromptBuilderService';
 import { imageGeneratorService } from '../services/ImageGeneratorService';
+import { useApiKey } from '../contexts/ApiKeyContext';
 import './GenerationControlPanel.css';
 
 interface GenerationControlPanelProps {
@@ -18,9 +19,17 @@ export function GenerationControlPanel({
   onError,
 }: GenerationControlPanelProps) {
   const [isGenerating, setIsGenerating] = useState(false);
+  const { apiKey, isConfigured } = useApiKey();
 
-  // Button is enabled only when both location and time are selected
-  const isEnabled = !isGenerating && selectedLocation !== undefined && selectedTime !== undefined;
+  // Update the service with the current API key
+  useEffect(() => {
+    if (apiKey) {
+      imageGeneratorService.setApiKey(apiKey);
+    }
+  }, [apiKey]);
+
+  // Button is enabled only when both location and time are selected AND API key is configured
+  const isEnabled = !isGenerating && selectedLocation !== undefined && selectedTime !== undefined && isConfigured;
 
   const handleGenerate = async () => {
     if (!selectedLocation || !selectedTime) {
@@ -73,7 +82,9 @@ export function GenerationControlPanel({
       
       {!isEnabled && !isGenerating && (
         <p className="hint-text">
-          {!selectedLocation && !selectedTime
+          {!isConfigured
+            ? 'Configure your API key using the 🔑 button...'
+            : !selectedLocation && !selectedTime
             ? 'Select a location and time to begin...'
             : !selectedLocation
             ? 'Select a location on the globe...'

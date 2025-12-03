@@ -1,5 +1,5 @@
 import axios, { AxiosError } from 'axios';
-import type { GeneratedImage, GeminiImageResponse, ApiError } from '../types';
+import type { GeneratedImage, ApiError } from '../types';
 
 /**
  * Service for generating images using Google Gemini API
@@ -15,8 +15,17 @@ export class ImageGeneratorService {
     // In browser: import.meta.env.VITE_GEMINI_API_KEY
     // In Node.js tests: pass apiKey directly to constructor
     this.apiKey = apiKey || (import.meta.env?.VITE_GEMINI_API_KEY as string) || '';
-    this.model = 'gemini-3-pro-image-preview';
-    this.apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent`;
+    // Using Imagen 3 for image generation
+    this.model = 'imagen-3.0-generate-002';
+    this.apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:predict`;
+  }
+
+  /**
+   * Set the API key dynamically
+   * @param apiKey - The Gemini API key
+   */
+  setApiKey(apiKey: string): void {
+    this.apiKey = apiKey;
   }
 
   /**
@@ -57,36 +66,34 @@ export class ImageGeneratorService {
     }
 
     try {
-      // Make API request
-      const response = await axios.post<GeminiImageResponse>(
+      // Make API request to Imagen
+      const response = await axios.post<{
+        predictions?: Array<{
+          bytesBase64Encoded: string;
+          mimeType: string;
+        }>;
+        error?: { code: number; message: string; status: string };
+      }>(
         `${this.apiEndpoint}?key=${this.apiKey}`,
         {
-          contents: [
-            {
-              parts: [
-                {
-                  text: prompt,
-                },
-              ],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.7,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 1024,
+          instances: [{ prompt }],
+          parameters: {
+            sampleCount: 1,
+            aspectRatio: '16:9',
+            safetyFilterLevel: 'block_few',
+            personGeneration: 'allow_adult',
           },
         },
         {
           headers: {
             'Content-Type': 'application/json',
           },
-          timeout: 60000, // 60 second timeout
+          timeout: 120000, // 120 second timeout for image generation
         }
       );
 
       // Parse response
-      return this.parseResponse(response.data, prompt);
+      return this.parseImagenResponse(response.data, prompt);
     } catch (error) {
       // Handle different error types
       throw this.handleError(error);
@@ -94,13 +101,15 @@ export class ImageGeneratorService {
   }
 
   /**
-   * Parse the Gemini API response and extract image data
-   * @param response - Raw API response
-   * @param prompt - Original prompt used
-   * @returns GeneratedImage object
+   * Parse Imagen API response
    */
-  private parseResponse(response: GeminiImageResponse, prompt: string): GeneratedImage {
-    // Check for API error in response
+  private parseImagenResponse(
+    response: {
+      predictions?: Array<{ bytesBase64Encoded: string; mimeType: string }>;
+      error?: { code: number; message: string; status: string };
+    },
+    prompt: string
+  ): GeneratedImage {
     if (response.error) {
       const error: ApiError = {
         message: response.error.message,
@@ -111,8 +120,7 @@ export class ImageGeneratorService {
       throw error;
     }
 
-    // Extract image data from response
-    if (!response.candidates || response.candidates.length === 0) {
+    if (!response.predictions || response.predictions.length === 0) {
       const error: ApiError = {
         message: 'No image generated. The API returned an empty response.',
         code: 500,
@@ -122,25 +130,8 @@ export class ImageGeneratorService {
       throw error;
     }
 
-    const candidate = response.candidates[0];
-    const parts = candidate.content.parts;
-
-    // Find inline image data
-    const imagePart = parts.find((part) => part.inlineData);
-
-    if (!imagePart || !imagePart.inlineData) {
-      const error: ApiError = {
-        message: 'No image data found in API response',
-        code: 500,
-        status: 'INTERNAL',
-      };
-      this.logError('Missing Image Data', error);
-      throw error;
-    }
-
-    // Convert base64 image data to data URL
-    const { mimeType, data } = imagePart.inlineData;
-    const imageUrl = `data:${mimeType};base64,${data}`;
+    const prediction = response.predictions[0];
+    const imageUrl = `data:${prediction.mimeType || 'image/png'};base64,${prediction.bytesBase64Encoded}`;
 
     return {
       url: imageUrl,
@@ -148,7 +139,7 @@ export class ImageGeneratorService {
       timestamp: new Date(),
       metadata: {
         model: this.model,
-        mimeType,
+        mimeType: prediction.mimeType || 'image/png',
       },
     };
   }
@@ -160,7 +151,7 @@ export class ImageGeneratorService {
    */
   private handleError(error: unknown): ApiError {
     if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError<GeminiImageResponse>;
+      const axiosError = error as AxiosError<{ error?: { code: number; message: string; status: string } }>;
 
       // Network errors
       if (axiosError.code === 'ECONNABORTED' || axiosError.code === 'ETIMEDOUT') {

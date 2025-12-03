@@ -26,7 +26,12 @@ export interface GeneratedImage {
   url: string;
   prompt: string;
   timestamp: Date;
-  metadata?: Record<string, unknown>;
+  metadata?: {
+    model?: string;
+    mimeType?: string;
+    description?: string;
+    [key: string]: unknown;
+  };
 }
 
 export interface AppState {
