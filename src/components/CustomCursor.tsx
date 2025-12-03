@@ -1,37 +1,30 @@
 import { useEffect, useState, useRef } from 'react';
 import './CustomCursor.css';
+import cursorImg from '../assets/halloween-cursor.png';
+import pointerImg from '../assets/halloween-pointer.png';
 
 export function CustomCursor() {
     const cursorRef = useRef<HTMLDivElement>(null);
-    const cursorDotRef = useRef<HTMLDivElement>(null);
     const [isHovering, setIsHovering] = useState(false);
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
         const cursor = cursorRef.current;
-        const cursorDot = cursorDotRef.current;
 
-        if (!cursor || !cursorDot) return;
+        if (!cursor) return;
 
         const onMouseMove = (e: MouseEvent) => {
             if (!isVisible) setIsVisible(true);
-
-            // Move the main cursor immediately
-            cursorDot.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
-
-            // Move the outer cursor with a slight delay/smoothing if we wanted, 
-            // but for now let's keep it snappy or use CSS transition
+            // Move the cursor
             cursor.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
         };
 
         const onMouseDown = () => {
             cursor.classList.add('cursor-clicked');
-            cursorDot.classList.add('cursor-clicked');
         };
 
         const onMouseUp = () => {
             cursor.classList.remove('cursor-clicked');
-            cursorDot.classList.remove('cursor-clicked');
         };
 
         const onMouseLeave = () => {
@@ -91,15 +84,12 @@ export function CustomCursor() {
     if (typeof window === 'undefined') return null;
 
     return (
-        <>
-            <div
-                ref={cursorRef}
-                className={`custom-cursor ${isHovering ? 'hovering' : ''} ${!isVisible ? 'hidden' : ''}`}
-            />
-            <div
-                ref={cursorDotRef}
-                className={`custom-cursor-dot ${isHovering ? 'hovering' : ''} ${!isVisible ? 'hidden' : ''}`}
-            />
-        </>
+        <div
+            ref={cursorRef}
+            className={`custom-cursor ${isHovering ? 'hovering' : ''} ${!isVisible ? 'hidden' : ''}`}
+            style={{
+                backgroundImage: `url(${isHovering ? pointerImg : cursorImg})`
+            }}
+        />
     );
 }
