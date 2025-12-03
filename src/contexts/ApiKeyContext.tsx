@@ -10,14 +10,14 @@ interface ApiKeyContextType {
 
 const ApiKeyContext = createContext<ApiKeyContextType | undefined>(undefined);
 
-const STORAGE_KEY = 'gemini-api-key';
+const STORAGE_KEY = 'huggingface-api-token';
 
 export function ApiKeyProvider({ children }: { children: ReactNode }) {
   const [apiKey, setApiKeyState] = useState<string>(() => {
     // Check localStorage for saved API key
     const saved = localStorage.getItem(STORAGE_KEY);
     // Also check environment variable as fallback
-    const envKey = import.meta.env?.VITE_GEMINI_API_KEY as string;
+    const envKey = import.meta.env?.VITE_HUGGINGFACE_API_TOKEN as string;
     return saved || envKey || '';
   });
 

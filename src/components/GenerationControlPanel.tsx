@@ -42,10 +42,10 @@ export function GenerationControlPanel({
     try {
       // Build the prompt
       const prompt = await promptBuilderService.buildPrompt(selectedLocation, selectedTime);
-      
+
       // Generate the image
       const generatedImage = await imageGeneratorService.generateImage(prompt);
-      
+
       // Notify parent component
       onImageGenerated(generatedImage);
     } catch (error) {
@@ -79,16 +79,16 @@ export function GenerationControlPanel({
           </span>
         )}
       </button>
-      
+
       {!isEnabled && !isGenerating && (
         <p className="hint-text">
           {!isConfigured
-            ? 'Configure your API key using the 🔑 button...'
+            ? 'Configure your Hugging Face token using the 🔑 button...'
             : !selectedLocation && !selectedTime
-            ? 'Select a location and time to begin...'
-            : !selectedLocation
-            ? 'Select a location on the globe...'
-            : 'Choose a time period...'}
+              ? 'Select a location and time to begin...'
+              : !selectedLocation
+                ? 'Select a location on the globe...'
+                : 'Choose a time period...'}
         </p>
       )}
     </div>

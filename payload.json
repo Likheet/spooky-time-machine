@@ -7,10 +7,5 @@
                 }
             ]
         }
-    ],
-    "generationConfig": {
-        "responseModalities": [
-            "IMAGE"
-        ]
-    }
+    ]
 }

@@ -2,7 +2,7 @@ import axios, { AxiosError } from 'axios';
 import type { GeneratedImage, ApiError } from '../types';
 
 /**
- * Service for generating images using Google Gemini API
+ * Service for generating images using Hugging Face Inference API
  * Handles API authentication, request/response lifecycle, and error handling
  */
 export class ImageGeneratorService {
@@ -12,17 +12,16 @@ export class ImageGeneratorService {
 
   constructor(apiKey?: string) {
     // Get API key from parameter or environment variable
-    // In browser: import.meta.env.VITE_GEMINI_API_KEY
-    // In Node.js tests: pass apiKey directly to constructor
-    this.apiKey = apiKey || (import.meta.env?.VITE_GEMINI_API_KEY as string) || '';
-    // Using Gemini 2.0 Flash Experimental for free tier image generation
-    this.model = 'gemini-2.0-flash-exp';
-    this.apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent`;
+    // In browser: import.meta.env.VITE_HUGGINGFACE_API_TOKEN
+    this.apiKey = apiKey || (import.meta.env?.VITE_HUGGINGFACE_API_TOKEN as string) || '';
+    // Using Stable Diffusion XL Base 1.0 for high quality free generation
+    this.model = 'stabilityai/stable-diffusion-xl-base-1.0';
+    this.apiEndpoint = `https://api-inference.huggingface.co/models/${this.model}`;
   }
 
   /**
    * Set the API key dynamically
-   * @param apiKey - The Gemini API key
+   * @param apiKey - The Hugging Face API token
    */
   setApiKey(apiKey: string): void {
     this.apiKey = apiKey;
@@ -46,7 +45,7 @@ export class ImageGeneratorService {
     // Validate API configuration
     if (!this.checkApiStatus()) {
       const error: ApiError = {
-        message: 'Gemini API key is not configured. Please set VITE_GEMINI_API_KEY environment variable.',
+        message: 'Hugging Face API token is not configured. Please set your access token.',
         code: 401,
         status: 'UNAUTHENTICATED',
       };
@@ -66,25 +65,22 @@ export class ImageGeneratorService {
     }
 
     try {
-      // Make API request to Gemini 2.0 Flash
+      // Make API request to Hugging Face Inference API
       const response = await axios.post(
-        `${this.apiEndpoint}?key=${this.apiKey}`,
-        {
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            responseModalities: ["IMAGE"],
-          },
-        },
+        this.apiEndpoint,
+        { inputs: prompt },
         {
           headers: {
+            Authorization: `Bearer ${this.apiKey}`,
             'Content-Type': 'application/json',
           },
-          timeout: 120000, // 120 second timeout for image generation
+          responseType: 'arraybuffer', // Important for receiving binary image data
+          timeout: 120000, // 120 second timeout
         }
       );
 
       // Parse response
-      return this.parseGeminiResponse(response.data, prompt);
+      return this.parseHuggingFaceResponse(response.data, prompt, response.headers['content-type']);
     } catch (error) {
       // Handle different error types
       throw this.handleError(error);
@@ -92,24 +88,14 @@ export class ImageGeneratorService {
   }
 
   /**
-   * Parse Gemini API response
+   * Parse Hugging Face API response
    */
-  private parseGeminiResponse(
-    response: any,
-    prompt: string
+  private parseHuggingFaceResponse(
+    data: ArrayBuffer,
+    prompt: string,
+    contentType: string
   ): GeneratedImage {
-    if (response.error) {
-      const error: ApiError = {
-        message: response.error.message,
-        code: response.error.code,
-        status: response.error.status,
-      };
-      this.logError('API Response Error', error);
-      throw error;
-    }
-
-    const candidate = response.candidates?.[0];
-    if (!candidate) {
+    if (!data || data.byteLength === 0) {
       const error: ApiError = {
         message: 'No image generated. The API returned an empty response.',
         code: 500,
@@ -119,24 +105,12 @@ export class ImageGeneratorService {
       throw error;
     }
 
-    // Look for inline data in parts
-    const imagePart = candidate.content?.parts?.find((part: any) => part.inlineData);
-
-    if (!imagePart) {
-      // Check if there is text rejection
-      const textPart = candidate.content?.parts?.find((part: any) => part.text);
-      const message = textPart ? textPart.text : 'The model did not generate an image.';
-
-      const error: ApiError = {
-        message: message,
-        code: 400,
-        status: 'INVALID_ARGUMENT',
-      };
-      this.logError('No Image In Response', error);
-      throw error;
-    }
-
-    const imageUrl = `data:${imagePart.inlineData.mimeType || 'image/png'};base64,${imagePart.inlineData.data}`;
+    // Convert ArrayBuffer to Base64
+    const base64 = btoa(
+      new Uint8Array(data).reduce((data, byte) => data + String.fromCharCode(byte), '')
+    );
+    const mimeType = contentType || 'image/jpeg';
+    const imageUrl = `data:${mimeType};base64,${base64}`;
 
     return {
       url: imageUrl,
@@ -144,7 +118,7 @@ export class ImageGeneratorService {
       timestamp: new Date(),
       metadata: {
         model: this.model,
-        mimeType: imagePart.inlineData.mimeType || 'image/png',
+        mimeType: mimeType,
       },
     };
   }
@@ -156,7 +130,7 @@ export class ImageGeneratorService {
    */
   private handleError(error: unknown): ApiError {
     if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError<{ error?: { code: number; message: string; status: string } }>;
+      const axiosError = error as AxiosError<{ error?: string }>;
 
       // Network errors
       if (axiosError.code === 'ECONNABORTED' || axiosError.code === 'ETIMEDOUT') {
@@ -183,7 +157,19 @@ export class ImageGeneratorService {
 
       // HTTP status errors
       const status = axiosError.response.status;
-      const responseData = axiosError.response.data;
+
+      // Try to parse error message from response body (which might be JSON even if responseType was arraybuffer)
+      let errorMessage = axiosError.message;
+      try {
+        if (axiosError.response.data instanceof ArrayBuffer) {
+          const decoder = new TextDecoder('utf-8');
+          const text = decoder.decode(axiosError.response.data);
+          const json = JSON.parse(text);
+          errorMessage = json.error || errorMessage;
+        }
+      } catch (e) {
+        // Ignore parsing error
+      }
 
       // Rate limit errors
       if (status === 429) {
@@ -191,7 +177,7 @@ export class ImageGeneratorService {
           message: 'Rate limit exceeded. Please wait a few moments before trying again.',
           code: 429,
           status: 'RESOURCE_EXHAUSTED',
-          details: responseData?.error?.message,
+          details: errorMessage,
         };
         this.logError('Rate Limit Error', apiError);
         return apiError;
@@ -200,33 +186,33 @@ export class ImageGeneratorService {
       // Authentication errors
       if (status === 401 || status === 403) {
         const apiError: ApiError = {
-          message: 'Authentication failed. Please check your API key configuration.',
+          message: 'Authentication failed. Please check your Hugging Face API token.',
           code: status,
           status: 'UNAUTHENTICATED',
-          details: responseData?.error?.message,
+          details: errorMessage,
         };
         this.logError('Authentication Error', apiError);
         return apiError;
       }
 
-      // API unavailable
+      // Model loading error (503 is common for HF inference when model is loading)
       if (status === 503) {
         const apiError: ApiError = {
-          message: 'The Gemini API is temporarily unavailable. Please try again later.',
+          message: 'The model is currently loading. Please try again in a few seconds.',
           code: 503,
           status: 'UNAVAILABLE',
-          details: responseData?.error?.message,
+          details: errorMessage,
         };
-        this.logError('Service Unavailable', apiError);
+        this.logError('Model Loading', apiError);
         return apiError;
       }
 
       // Other API errors
       const apiError: ApiError = {
-        message: responseData?.error?.message || `API request failed with status ${status}`,
+        message: errorMessage || `API request failed with status ${status}`,
         code: status,
-        status: responseData?.error?.status || 'UNKNOWN',
-        details: responseData,
+        status: 'UNKNOWN',
+        details: axiosError.response.data,
       };
       this.logError('API Error', apiError);
       return apiError;

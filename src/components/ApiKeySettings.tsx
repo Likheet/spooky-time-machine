@@ -50,31 +50,31 @@ export function ApiKeySettings() {
 
       {isExpanded && (
         <div className="api-key-settings-panel" role="dialog" aria-label="API Key Settings">
-          <h3>Gemini API Key</h3>
+          <h3>Hugging Face Token</h3>
 
           {isConfigured ? (
             <div className="api-key-configured">
               <div className="current-key">
-                <span className="key-label">Current Key:</span>
+                <span className="key-label">Current Token:</span>
                 <span className="key-value">{showKey ? apiKey : maskedKey}</span>
                 <button
                   className="toggle-visibility"
                   onClick={() => setShowKey(!showKey)}
-                  aria-label={showKey ? 'Hide API key' : 'Show API key'}
+                  aria-label={showKey ? 'Hide API token' : 'Show API token'}
                 >
                   {showKey ? '👁️' : '👁️‍🗨️'}
                 </button>
               </div>
               <div className="api-key-actions">
                 <button className="clear-btn" onClick={handleClear}>
-                  Remove Key
+                  Remove Token
                 </button>
               </div>
             </div>
           ) : (
             <div className="api-key-input-section">
               <p className="api-key-description">
-                Enter your Gemini API key to enable image generation.
+                Enter your Hugging Face Access Token to enable image generation.
               </p>
               <div className="input-group">
                 <input
@@ -82,8 +82,8 @@ export function ApiKeySettings() {
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="Enter your API key..."
-                  aria-label="Gemini API key"
+                  placeholder="hf_..."
+                  aria-label="Hugging Face API token"
                   autoFocus
                 />
                 <button
@@ -95,13 +95,13 @@ export function ApiKeySettings() {
                 </button>
               </div>
               <p className="api-key-hint">
-                Get your API key from{' '}
+                Get your free token from{' '}
                 <a
-                  href="https://aistudio.google.com/apikey"
+                  href="https://huggingface.co/settings/tokens"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  Google AI Studio
+                  Hugging Face Settings
                 </a>
               </p>
             </div>
