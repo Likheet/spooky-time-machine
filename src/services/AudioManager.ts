@@ -30,19 +30,23 @@ class AudioManager {
     }
 
     // Check localStorage for saved preferences
-    const savedMuteState = localStorage.getItem('audioMuted');
-    if (savedMuteState !== null) {
-      this.isMuted = savedMuteState === 'true';
-    }
+    try {
+      const savedMuteState = localStorage.getItem('audioMuted');
+      if (savedMuteState !== null) {
+        this.isMuted = savedMuteState === 'true';
+      }
 
-    const savedVolume = localStorage.getItem('audioVolume');
-    if (savedVolume !== null) {
-      this.masterVolume = parseFloat(savedVolume);
-    }
+      const savedVolume = localStorage.getItem('audioVolume');
+      if (savedVolume !== null) {
+        this.masterVolume = parseFloat(savedVolume);
+      }
 
-    const savedEnabled = localStorage.getItem('audioEnabled');
-    if (savedEnabled !== null) {
-      this.isEnabled = savedEnabled === 'true';
+      const savedEnabled = localStorage.getItem('audioEnabled');
+      if (savedEnabled !== null) {
+        this.isEnabled = savedEnabled === 'true';
+      }
+    } catch (e) {
+      console.warn('LocalStorage access denied for audio preferences');
     }
   }
 
@@ -135,7 +139,11 @@ class AudioManager {
    */
   setMasterVolume(volume: number): void {
     this.masterVolume = Math.max(0, Math.min(1, volume));
-    localStorage.setItem('audioVolume', this.masterVolume.toString());
+    try {
+      localStorage.setItem('audioVolume', this.masterVolume.toString());
+    } catch (e) {
+      // Ignore error
+    }
   }
 
   /**
@@ -150,7 +158,11 @@ class AudioManager {
    */
   toggleMute(): boolean {
     this.isMuted = !this.isMuted;
-    localStorage.setItem('audioMuted', this.isMuted.toString());
+    try {
+      localStorage.setItem('audioMuted', this.isMuted.toString());
+    } catch (e) {
+      // Ignore error
+    }
     return this.isMuted;
   }
 
@@ -166,7 +178,11 @@ class AudioManager {
    */
   setEnabled(enabled: boolean): void {
     this.isEnabled = enabled;
-    localStorage.setItem('audioEnabled', enabled.toString());
+    try {
+      localStorage.setItem('audioEnabled', enabled.toString());
+    } catch (e) {
+      // Ignore error
+    }
     if (!enabled) {
       this.stopAllSounds();
     }

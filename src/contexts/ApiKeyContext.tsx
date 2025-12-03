@@ -14,25 +14,38 @@ const STORAGE_KEY = 'huggingface-api-token';
 
 export function ApiKeyProvider({ children }: { children: ReactNode }) {
   const [apiKey, setApiKeyState] = useState<string>(() => {
-    // Check localStorage for saved API key
-    const saved = localStorage.getItem(STORAGE_KEY);
-    // Also check environment variable as fallback
-    const envKey = import.meta.env?.VITE_HUGGINGFACE_API_TOKEN as string;
-    return saved || envKey || '';
+    try {
+      // Check localStorage for saved API key
+      const saved = localStorage.getItem(STORAGE_KEY);
+      // Also check environment variable as fallback
+      const envKey = import.meta.env?.VITE_HUGGINGFACE_API_TOKEN as string;
+      return saved || envKey || '';
+    } catch (e) {
+      console.warn('LocalStorage access denied, using in-memory storage only');
+      return (import.meta.env?.VITE_HUGGINGFACE_API_TOKEN as string) || '';
+    }
   });
 
   const setApiKey = useCallback((key: string) => {
     setApiKeyState(key);
-    if (key) {
-      localStorage.setItem(STORAGE_KEY, key);
-    } else {
-      localStorage.removeItem(STORAGE_KEY);
+    try {
+      if (key) {
+        localStorage.setItem(STORAGE_KEY, key);
+      } else {
+        localStorage.removeItem(STORAGE_KEY);
+      }
+    } catch (e) {
+      console.warn('LocalStorage access denied, key will not be persisted');
     }
   }, []);
 
   const clearApiKey = useCallback(() => {
     setApiKeyState('');
-    localStorage.removeItem(STORAGE_KEY);
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (e) {
+      // Ignore error
+    }
   }, []);
 
   return (

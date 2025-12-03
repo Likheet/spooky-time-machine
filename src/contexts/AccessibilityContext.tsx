@@ -12,20 +12,28 @@ const AccessibilityContext = createContext<AccessibilitySettings | undefined>(un
 
 export function AccessibilityProvider({ children }: { children: ReactNode }) {
   const [reducedMotion, setReducedMotionState] = useState<boolean>(() => {
-    // Check user preference from localStorage
-    const saved = localStorage.getItem('accessibility-reduced-motion');
-    if (saved !== null) {
-      return saved === 'true';
+    try {
+      // Check user preference from localStorage
+      const saved = localStorage.getItem('accessibility-reduced-motion');
+      if (saved !== null) {
+        return saved === 'true';
+      }
+    } catch (e) {
+      // Ignore error
     }
     // Check system preference
     return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   });
 
   const [audioEnabled, setAudioEnabledState] = useState<boolean>(() => {
-    // Check user preference from localStorage
-    const saved = localStorage.getItem('accessibility-audio-enabled');
-    if (saved !== null) {
-      return saved === 'true';
+    try {
+      // Check user preference from localStorage
+      const saved = localStorage.getItem('accessibility-audio-enabled');
+      if (saved !== null) {
+        return saved === 'true';
+      }
+    } catch (e) {
+      // Ignore error
     }
     // Default to enabled
     return true;
@@ -42,12 +50,20 @@ export function AccessibilityProvider({ children }: { children: ReactNode }) {
 
   const setReducedMotion = (enabled: boolean) => {
     setReducedMotionState(enabled);
-    localStorage.setItem('accessibility-reduced-motion', String(enabled));
+    try {
+      localStorage.setItem('accessibility-reduced-motion', String(enabled));
+    } catch (e) {
+      // Ignore error
+    }
   };
 
   const setAudioEnabled = (enabled: boolean) => {
     setAudioEnabledState(enabled);
-    localStorage.setItem('accessibility-audio-enabled', String(enabled));
+    try {
+      localStorage.setItem('accessibility-audio-enabled', String(enabled));
+    } catch (e) {
+      // Ignore error
+    }
   };
 
   return (
