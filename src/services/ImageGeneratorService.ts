@@ -65,15 +65,7 @@ export class ImageGeneratorService {
 
     try {
       // Make API request to Hugging Face Inference API
-      const response = await fetch(this.apiEndpoint, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
-          'x-use-cache': 'false',
-        },
-        body: JSON.stringify({ inputs: prompt }),
-      });
+      const response = await this.makeRequest(this.apiEndpoint, prompt);
 
       if (!response.ok) {
         await this.handleHttpError(response);
@@ -87,6 +79,40 @@ export class ImageGeneratorService {
     } catch (error) {
       // Handle different error types
       throw this.handleError(error);
+    }
+  }
+
+  /**
+   * Make request with fallback to proxy
+   */
+  private async makeRequest(url: string, prompt: string): Promise<Response> {
+    const headers = {
+      Authorization: `Bearer ${this.apiKey}`,
+      'Content-Type': 'application/json',
+      'x-use-cache': 'false',
+    };
+    const body = JSON.stringify({ inputs: prompt });
+
+    try {
+      // Try direct request first
+      return await fetch(url, {
+        method: 'POST',
+        headers,
+        body,
+      });
+    } catch (error) {
+      // If network error (likely CORS), try with proxy
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        console.warn('Direct request failed, retrying with CORS proxy...');
+        // Using corsproxy.io as a fallback for GitHub Pages
+        const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
+        return await fetch(proxyUrl, {
+          method: 'POST',
+          headers,
+          body,
+        });
+      }
+      throw error;
     }
   }
 

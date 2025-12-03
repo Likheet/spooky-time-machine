@@ -13,10 +13,12 @@ const AccessibilityContext = createContext<AccessibilitySettings | undefined>(un
 export function AccessibilityProvider({ children }: { children: ReactNode }) {
   const [reducedMotion, setReducedMotionState] = useState<boolean>(() => {
     try {
-      // Check user preference from localStorage
-      const saved = localStorage.getItem('accessibility-reduced-motion');
-      if (saved !== null) {
-        return saved === 'true';
+      if (typeof localStorage !== 'undefined') {
+        // Check user preference from localStorage
+        const saved = localStorage.getItem('accessibility-reduced-motion');
+        if (saved !== null) {
+          return saved === 'true';
+        }
       }
     } catch (e) {
       // Ignore error
@@ -27,10 +29,12 @@ export function AccessibilityProvider({ children }: { children: ReactNode }) {
 
   const [audioEnabled, setAudioEnabledState] = useState<boolean>(() => {
     try {
-      // Check user preference from localStorage
-      const saved = localStorage.getItem('accessibility-audio-enabled');
-      if (saved !== null) {
-        return saved === 'true';
+      if (typeof localStorage !== 'undefined') {
+        // Check user preference from localStorage
+        const saved = localStorage.getItem('accessibility-audio-enabled');
+        if (saved !== null) {
+          return saved === 'true';
+        }
       }
     } catch (e) {
       // Ignore error
@@ -51,7 +55,9 @@ export function AccessibilityProvider({ children }: { children: ReactNode }) {
   const setReducedMotion = (enabled: boolean) => {
     setReducedMotionState(enabled);
     try {
-      localStorage.setItem('accessibility-reduced-motion', String(enabled));
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('accessibility-reduced-motion', String(enabled));
+      }
     } catch (e) {
       // Ignore error
     }
@@ -60,7 +66,9 @@ export function AccessibilityProvider({ children }: { children: ReactNode }) {
   const setAudioEnabled = (enabled: boolean) => {
     setAudioEnabledState(enabled);
     try {
-      localStorage.setItem('accessibility-audio-enabled', String(enabled));
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('accessibility-audio-enabled', String(enabled));
+      }
     } catch (e) {
       // Ignore error
     }

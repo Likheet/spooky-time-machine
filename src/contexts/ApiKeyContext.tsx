@@ -15,11 +15,14 @@ const STORAGE_KEY = 'huggingface-api-token';
 export function ApiKeyProvider({ children }: { children: ReactNode }) {
   const [apiKey, setApiKeyState] = useState<string>(() => {
     try {
-      // Check localStorage for saved API key
-      const saved = localStorage.getItem(STORAGE_KEY);
-      // Also check environment variable as fallback
-      const envKey = import.meta.env?.VITE_HUGGINGFACE_API_TOKEN as string;
-      return saved || envKey || '';
+      if (typeof localStorage !== 'undefined') {
+        // Check localStorage for saved API key
+        const saved = localStorage.getItem(STORAGE_KEY);
+        // Also check environment variable as fallback
+        const envKey = import.meta.env?.VITE_HUGGINGFACE_API_TOKEN as string;
+        return saved || envKey || '';
+      }
+      return (import.meta.env?.VITE_HUGGINGFACE_API_TOKEN as string) || '';
     } catch (e) {
       console.warn('LocalStorage access denied, using in-memory storage only');
       return (import.meta.env?.VITE_HUGGINGFACE_API_TOKEN as string) || '';
@@ -29,10 +32,12 @@ export function ApiKeyProvider({ children }: { children: ReactNode }) {
   const setApiKey = useCallback((key: string) => {
     setApiKeyState(key);
     try {
-      if (key) {
-        localStorage.setItem(STORAGE_KEY, key);
-      } else {
-        localStorage.removeItem(STORAGE_KEY);
+      if (typeof localStorage !== 'undefined') {
+        if (key) {
+          localStorage.setItem(STORAGE_KEY, key);
+        } else {
+          localStorage.removeItem(STORAGE_KEY);
+        }
       }
     } catch (e) {
       console.warn('LocalStorage access denied, key will not be persisted');
@@ -42,7 +47,9 @@ export function ApiKeyProvider({ children }: { children: ReactNode }) {
   const clearApiKey = useCallback(() => {
     setApiKeyState('');
     try {
-      localStorage.removeItem(STORAGE_KEY);
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem(STORAGE_KEY);
+      }
     } catch (e) {
       // Ignore error
     }

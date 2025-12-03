@@ -31,19 +31,21 @@ class AudioManager {
 
     // Check localStorage for saved preferences
     try {
-      const savedMuteState = localStorage.getItem('audioMuted');
-      if (savedMuteState !== null) {
-        this.isMuted = savedMuteState === 'true';
-      }
+      if (typeof localStorage !== 'undefined') {
+        const savedMuteState = localStorage.getItem('audioMuted');
+        if (savedMuteState !== null) {
+          this.isMuted = savedMuteState === 'true';
+        }
 
-      const savedVolume = localStorage.getItem('audioVolume');
-      if (savedVolume !== null) {
-        this.masterVolume = parseFloat(savedVolume);
-      }
+        const savedVolume = localStorage.getItem('audioVolume');
+        if (savedVolume !== null) {
+          this.masterVolume = parseFloat(savedVolume);
+        }
 
-      const savedEnabled = localStorage.getItem('audioEnabled');
-      if (savedEnabled !== null) {
-        this.isEnabled = savedEnabled === 'true';
+        const savedEnabled = localStorage.getItem('audioEnabled');
+        if (savedEnabled !== null) {
+          this.isEnabled = savedEnabled === 'true';
+        }
       }
     } catch (e) {
       console.warn('LocalStorage access denied for audio preferences');
@@ -140,7 +142,9 @@ class AudioManager {
   setMasterVolume(volume: number): void {
     this.masterVolume = Math.max(0, Math.min(1, volume));
     try {
-      localStorage.setItem('audioVolume', this.masterVolume.toString());
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('audioVolume', this.masterVolume.toString());
+      }
     } catch (e) {
       // Ignore error
     }
@@ -159,7 +163,9 @@ class AudioManager {
   toggleMute(): boolean {
     this.isMuted = !this.isMuted;
     try {
-      localStorage.setItem('audioMuted', this.isMuted.toString());
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('audioMuted', this.isMuted.toString());
+      }
     } catch (e) {
       // Ignore error
     }
@@ -179,7 +185,9 @@ class AudioManager {
   setEnabled(enabled: boolean): void {
     this.isEnabled = enabled;
     try {
-      localStorage.setItem('audioEnabled', enabled.toString());
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('audioEnabled', enabled.toString());
+      }
     } catch (e) {
       // Ignore error
     }
