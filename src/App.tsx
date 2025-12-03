@@ -17,6 +17,8 @@ function App() {
   const [selectedLocation, setSelectedLocation] = useState<Coordinates | undefined>();
   const [selectedTime, setSelectedTime] = useState<TimeSelection | undefined>();
   const [generatedImage, setGeneratedImage] = useState<GeneratedImage | null>(null);
+  const [spookyStory, setSpookyStory] = useState<string>('');
+  const [spookyTitle, setSpookyTitle] = useState<string>('');
   const [error, setError] = useState<string>('');
 
   // Keyboard navigation support
@@ -49,6 +51,12 @@ function App() {
     console.log('Image generated:', image);
     setGeneratedImage(image);
     setError(''); // Clear any previous errors
+  };
+
+  const handleStoryGenerated = (data: { title: string; story: string }) => {
+    console.log('Story generated:', data);
+    setSpookyStory(data.story);
+    setSpookyTitle(data.title);
   };
 
   const handleError = (errorMessage: string) => {
@@ -142,6 +150,7 @@ function App() {
                 onTimeChange={handleTimeChange}
                 onEventSelect={handleEventSelect}
                 onImageGenerated={handleImageGenerated}
+                onStoryGenerated={handleStoryGenerated}
                 onError={handleError}
               />
             </div>
@@ -162,6 +171,8 @@ function App() {
               image={generatedImage}
               location={selectedLocation}
               time={selectedTime}
+              story={spookyStory}
+              title={spookyTitle}
             />
           )}
         </main>

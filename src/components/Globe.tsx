@@ -195,9 +195,14 @@ export function Globe({ onLocationSelect, selectedLocation }: GlobeProps) {
     }
   }, [selectedLocation]);
 
+  const hasDraggedRef = useRef(false);
+
+  // ...
+
   // Mouse drag handlers
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     setIsDragging(true);
+    hasDraggedRef.current = false;
     dragStartRef.current = {
       x: e.clientX,
       y: e.clientY,
@@ -210,6 +215,11 @@ export function Globe({ onLocationSelect, selectedLocation }: GlobeProps) {
 
     const dx = e.clientX - dragStartRef.current.x;
     const dy = e.clientY - dragStartRef.current.y;
+
+    // Check if moved enough to consider it a drag
+    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+      hasDraggedRef.current = true;
+    }
 
     const sensitivity = 0.5;
     const newRotation: [number, number] = [
@@ -232,6 +242,8 @@ export function Globe({ onLocationSelect, selectedLocation }: GlobeProps) {
 
   // Click to select location
   const handleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (hasDraggedRef.current) return;
+
     const canvas = canvasRef.current;
     if (!canvas) return;
 

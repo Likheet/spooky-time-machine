@@ -1,17 +1,26 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { GeneratedImage, Coordinates, TimeSelection } from '../types';
-import { LazyImage } from './LazyImage';
 import './ImageDisplay.css';
 
 interface ImageDisplayProps {
   image: GeneratedImage | null;
   location: Coordinates | undefined;
   time: TimeSelection | undefined;
+  story?: string;
+  title?: string;
 }
 
-export function ImageDisplay({ image, location, time }: ImageDisplayProps) {
+export function ImageDisplay({ image, location, time, story, title }: ImageDisplayProps) {
   const [isImageLoading, setIsImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
+
+  // Reset loading state when image changes
+  useEffect(() => {
+    if (image) {
+      setIsImageLoading(true);
+      setImageError(false);
+    }
+  }, [image]);
 
   if (!image) {
     return null;
@@ -44,9 +53,9 @@ export function ImageDisplay({ image, location, time }: ImageDisplayProps) {
         const response = await fetch(image.url);
         const blob = await response.blob();
         const file = new File([blob], 'time-travel-image.png', { type: 'image/png' });
-        
+
         await navigator.share({
-          title: 'Time Travel Explorer',
+          title: title || 'Time Travel Explorer',
           text: `${location?.name || 'A location'} in ${time?.displayName || 'the past'}`,
           files: [file],
         });
@@ -73,7 +82,7 @@ export function ImageDisplay({ image, location, time }: ImageDisplayProps) {
         <div className="frame-corner frame-corner-tr"></div>
         <div className="frame-corner frame-corner-bl"></div>
         <div className="frame-corner frame-corner-br"></div>
-        
+
         {/* Image loading state */}
         {isImageLoading && !imageError && (
           <div className="image-loading">
@@ -83,16 +92,16 @@ export function ImageDisplay({ image, location, time }: ImageDisplayProps) {
             <p>Materializing vision...</p>
           </div>
         )}
-        
+
         {/* Image error state */}
         {imageError && (
           <div className="image-error">
             <p>Failed to load image</p>
           </div>
         )}
-        
+
         {/* The actual image */}
-        <LazyImage
+        <img
           src={image.url}
           alt={`${location?.name || 'Location'} in ${time?.displayName || 'the past'}`}
           className={`generated-image ${isImageLoading ? 'loading' : 'loaded'}`}
@@ -100,9 +109,43 @@ export function ImageDisplay({ image, location, time }: ImageDisplayProps) {
           onError={handleImageError}
         />
       </div>
-      
-      {/* Description (if available) */}
-      {image.metadata?.description && (
+
+      {/* Spooky Story Display */}
+      {story && (
+        <div className="spooky-story-container" style={{
+          margin: '1.5rem 0',
+          padding: '1.5rem',
+          background: 'rgba(0, 0, 0, 0.6)',
+          border: '1px solid rgba(157, 78, 221, 0.3)',
+          borderRadius: '8px',
+          boxShadow: '0 0 20px rgba(0, 0, 0, 0.5)',
+          animation: 'fadeIn 1s ease-in'
+        }}>
+          <h3 className="description-title" style={{
+            color: '#ff6b35',
+            fontFamily: "'Creepster', cursive",
+            letterSpacing: '0.05em',
+            marginBottom: '0.5rem',
+            textAlign: 'center',
+            fontSize: '1.5rem',
+            textShadow: '0 0 10px rgba(255, 107, 53, 0.5)'
+          }}>
+            {title || 'The Legend...'}
+          </h3>
+          <p className="description-text" style={{
+            color: '#e0e0e0',
+            fontFamily: "'Cinzel', serif",
+            fontStyle: 'italic',
+            lineHeight: '1.6',
+            textAlign: 'justify'
+          }}>
+            {story}
+          </p>
+        </div>
+      )}
+
+      {/* Description (fallback if no story) */}
+      {!story && image.metadata?.description && (
         <div className="image-description">
           <h3 className="description-title">Historical Vision</h3>
           <p className="description-text">{image.metadata.description}</p>
@@ -117,12 +160,12 @@ export function ImageDisplay({ image, location, time }: ImageDisplayProps) {
             {location?.name || `${location?.latitude.toFixed(4)}°, ${location?.longitude.toFixed(4)}°`}
           </span>
         </div>
-        
+
         <div className="metadata-section">
           <span className="metadata-label">Time Period:</span>
           <span className="metadata-value">{time?.displayName || 'Unknown'}</span>
         </div>
-        
+
         <div className="metadata-section">
           <span className="metadata-label">Generated:</span>
           <span className="metadata-value">
@@ -130,7 +173,7 @@ export function ImageDisplay({ image, location, time }: ImageDisplayProps) {
           </span>
         </div>
       </div>
-      
+
       {/* Action buttons */}
       <div className="image-actions">
         <button
@@ -141,7 +184,7 @@ export function ImageDisplay({ image, location, time }: ImageDisplayProps) {
           <span className="button-icon">⬇</span>
           <span className="button-label">Download</span>
         </button>
-        
+
         <button
           className="action-button share-button"
           onClick={handleShare}

@@ -1,272 +1,142 @@
+import { HfInference } from '@huggingface/inference';
 import type { GeneratedImage, ApiError } from '../types';
 
 /**
  * Service for generating images using Hugging Face Inference API
- * Handles API authentication, request/response lifecycle, and error handling
+ * Uses the official @huggingface/inference library for best compatibility
  */
 export class ImageGeneratorService {
   private apiKey: string;
-  private apiEndpoint: string;
   private model: string;
+  private client: HfInference;
 
   constructor(apiKey?: string) {
-    // Get API key from parameter or environment variable
-    // In browser: import.meta.env.VITE_HUGGINGFACE_API_TOKEN
     this.apiKey = apiKey || (import.meta.env?.VITE_HUGGINGFACE_API_TOKEN as string) || '';
-    // Using Stable Diffusion XL Base 1.0 for high quality free generation
+    // Using Stable Diffusion XL Base 1.0 as v1.5 is no longer available on the router
     this.model = 'stabilityai/stable-diffusion-xl-base-1.0';
-    this.apiEndpoint = `https://api-inference.huggingface.co/models/${this.model}`;
+
+    // Initialize client with custom fetch for proxy support
+    this.client = new HfInference(this.apiKey, {
+      fetch: this.customFetch.bind(this)
+    });
   }
 
   /**
-   * Set the API key dynamically
-   * @param apiKey - The Hugging Face API token
+   * Custom fetch implementation to handle proxies and CORS
    */
+  private async customFetch(url: string | Request | URL, init?: RequestInit): Promise<Response> {
+    const urlStr = url.toString();
+
+    // 1. Try direct request (or local proxy in dev)
+    try {
+      let targetUrl = urlStr;
+
+      // In development, if we want to use the local proxy, we might need to rewrite
+      // But since we installed the library, let's try to let it handle it first.
+      // If CORS blocks it locally, we might need the proxy.
+      // For now, let's try direct.
+
+      console.log(`[ImageGenerator] Fetching: ${targetUrl}`);
+      const response = await fetch(targetUrl, init);
+
+      // If successful or a valid API error (not network/CORS), return it
+      if (response.ok || response.status !== 404) { // 404 might be wrong URL, but 410 is Gone
+        return response;
+      }
+
+      // If 410 (Gone), it means the URL is deprecated, but the library should have used the right one?
+      // If the library is old, it might use the old one. We just installed it, so it should be new.
+      // But just in case, if it fails, we fall through to proxy.
+      throw new Error(`Direct request failed: ${response.status} ${response.statusText}`);
+
+    } catch (error) {
+      console.warn('[ImageGenerator] Direct request failed, retrying with proxy...', error);
+
+      // 2. Try with CORS Anywhere proxy
+      // We need to ensure we are proxying the FULL url
+      const proxyUrl = 'https://cors-anywhere.herokuapp.com/' + urlStr;
+
+      try {
+        const proxyResponse = await fetch(proxyUrl, init);
+        return proxyResponse;
+      } catch (proxyError) {
+        console.error('[ImageGenerator] Proxy request also failed:', proxyError);
+        throw error;
+      }
+    }
+  }
+
   setApiKey(apiKey: string): void {
     this.apiKey = apiKey;
+    // Re-initialize client
+    this.client = new HfInference(this.apiKey, {
+      fetch: this.customFetch.bind(this)
+    });
   }
 
-  /**
-   * Check if the API is properly configured
-   * @returns true if API key is available
-   */
   checkApiStatus(): boolean {
     return this.apiKey.length > 0;
   }
 
-  /**
-   * Generate an image based on the provided prompt
-   * @param prompt - The text prompt for image generation
-   * @returns Promise resolving to GeneratedImage
-   * @throws ApiError for various failure scenarios
-   */
   async generateImage(prompt: string): Promise<GeneratedImage> {
-    // Validate API configuration
     if (!this.checkApiStatus()) {
       const error: ApiError = {
-        message: 'Hugging Face API token is not configured. Please set your access token.',
+        message: 'Hugging Face API token is not configured.',
         code: 401,
         status: 'UNAUTHENTICATED',
       };
-      this.logError('API Configuration Error', error);
-      throw error;
-    }
-
-    // Validate prompt
-    if (!prompt || prompt.trim().length === 0) {
-      const error: ApiError = {
-        message: 'Prompt cannot be empty',
-        code: 400,
-        status: 'INVALID_ARGUMENT',
-      };
-      this.logError('Invalid Prompt', error);
       throw error;
     }
 
     try {
-      // Make API request to Hugging Face Inference API
-      const response = await this.makeRequest(this.apiEndpoint, prompt);
+      console.log(`[ImageGenerator] Generating with model: ${this.model}`);
 
-      if (!response.ok) {
-        await this.handleHttpError(response);
-      }
-
-      const blob = await response.blob();
-      const arrayBuffer = await blob.arrayBuffer();
-
-      // Parse response
-      return this.parseHuggingFaceResponse(arrayBuffer, prompt, response.headers.get('content-type') || '');
-    } catch (error) {
-      // Handle different error types
-      throw this.handleError(error);
-    }
-  }
-
-  /**
-   * Make request with fallback to proxy
-   */
-  private async makeRequest(url: string, prompt: string): Promise<Response> {
-    const headers = {
-      Authorization: `Bearer ${this.apiKey}`,
-      'Content-Type': 'application/json',
-      'x-use-cache': 'false',
-    };
-    const body = JSON.stringify({ inputs: prompt });
-
-    try {
-      // Try direct request first
-      return await fetch(url, {
-        method: 'POST',
-        headers,
-        body,
-      });
-    } catch (error) {
-      // If network error (likely CORS), try with proxy
-      if (error instanceof TypeError && error.message === 'Failed to fetch') {
-        console.warn('Direct request failed, retrying with CORS proxy...');
-        // Using corsproxy.io as a fallback for GitHub Pages
-        const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
-        return await fetch(proxyUrl, {
-          method: 'POST',
-          headers,
-          body,
-        });
-      }
-      throw error;
-    }
-  }
-
-  /**
-   * Parse Hugging Face API response
-   */
-  private parseHuggingFaceResponse(
-    data: ArrayBuffer,
-    prompt: string,
-    contentType: string
-  ): GeneratedImage {
-    if (!data || data.byteLength === 0) {
-      const error: ApiError = {
-        message: 'No image generated. The API returned an empty response.',
-        code: 500,
-        status: 'INTERNAL',
-      };
-      this.logError('Empty Response', error);
-      throw error;
-    }
-
-    // Convert ArrayBuffer to Base64
-    const base64 = btoa(
-      new Uint8Array(data).reduce((data, byte) => data + String.fromCharCode(byte), '')
-    );
-    const mimeType = contentType || 'image/jpeg';
-    const imageUrl = `data:${mimeType};base64,${base64}`;
-
-    return {
-      url: imageUrl,
-      prompt,
-      timestamp: new Date(),
-      metadata: {
+      // Use the library's textToImage method
+      const result = await this.client.textToImage({
         model: this.model,
-        mimeType: mimeType,
-      },
-    };
-  }
+        inputs: prompt,
+        parameters: {
+          negative_prompt: 'blurry, bad quality, distorted',
+        }
+      });
 
-  /**
-   * Handle HTTP errors from fetch
-   */
-  private async handleHttpError(response: Response): Promise<never> {
-    let errorMessage = `API request failed with status ${response.status}`;
-    let errorDetails: any = null;
+      const blob = result as unknown as Blob;
 
-    try {
-      const text = await response.text();
-      try {
-        const json = JSON.parse(text);
-        errorMessage = json.error || errorMessage;
-        errorDetails = json;
-      } catch {
-        errorMessage = text || errorMessage;
+      // Convert Blob to Base64
+      const buffer = await blob.arrayBuffer();
+      const base64 = btoa(
+        new Uint8Array(buffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
+      );
+      const imageUrl = `data:${blob.type};base64,${base64}`;
+
+      return {
+        url: imageUrl,
+        prompt,
+        timestamp: new Date(),
+        metadata: {
+          model: this.model,
+          mimeType: blob.type,
+        },
+      };
+
+    } catch (error: any) {
+      console.error('[ImageGenerator] Error:', error);
+
+      // Parse error message
+      let message = error.message || 'An unexpected error occurred';
+      if (message.includes('cors-anywhere')) {
+        message = 'CORS Proxy requires activation. Visit https://cors-anywhere.herokuapp.com/corsdemo';
       }
-    } catch (e) {
-      // Ignore body parsing error
-    }
 
-    // Rate limit errors
-    if (response.status === 429) {
       const apiError: ApiError = {
-        message: 'Rate limit exceeded. Please wait a few moments before trying again.',
-        code: 429,
-        status: 'RESOURCE_EXHAUSTED',
-        details: errorMessage,
+        message,
+        code: error.status || 500,
+        status: 'INTERNAL',
+        details: error,
       };
-      this.logError('Rate Limit Error', apiError);
       throw apiError;
     }
-
-    // Authentication errors
-    if (response.status === 401 || response.status === 403) {
-      const apiError: ApiError = {
-        message: 'Authentication failed. Please check your Hugging Face API token.',
-        code: response.status,
-        status: 'UNAUTHENTICATED',
-        details: errorMessage,
-      };
-      this.logError('Authentication Error', apiError);
-      throw apiError;
-    }
-
-    // Model loading error
-    if (response.status === 503) {
-      const apiError: ApiError = {
-        message: 'The model is currently loading. Please try again in a few seconds.',
-        code: 503,
-        status: 'UNAVAILABLE',
-        details: errorMessage,
-      };
-      this.logError('Model Loading', apiError);
-      throw apiError;
-    }
-
-    const apiError: ApiError = {
-      message: errorMessage,
-      code: response.status,
-      status: 'UNKNOWN',
-      details: errorDetails,
-    };
-    this.logError('API Error', apiError);
-    throw apiError;
-  }
-
-  /**
-   * Handle errors from API calls
-   * @param error - Error object
-   * @returns ApiError with appropriate message and details
-   */
-  private handleError(error: unknown): ApiError {
-    // If it's already an ApiError (thrown by handleHttpError), rethrow it
-    if ((error as ApiError).status) {
-      return error as ApiError;
-    }
-
-    // Network errors (fetch throws TypeError for network issues)
-    if (error instanceof TypeError && error.message === 'Failed to fetch') {
-      const apiError: ApiError = {
-        message: 'Network error. Please check your internet connection and try again. If this persists, it might be a CORS issue.',
-        code: 0,
-        status: 'NETWORK_ERROR',
-        details: error.message,
-      };
-      this.logError('Network Error', apiError);
-      return apiError;
-    }
-
-    // Unknown errors
-    const apiError: ApiError = {
-      message: error instanceof Error ? error.message : 'An unexpected error occurred',
-      code: 500,
-      status: 'INTERNAL',
-      details: error,
-    };
-    this.logError('Unknown Error', apiError);
-    return apiError;
-  }
-
-  /**
-   * Log errors for debugging purposes
-   * @param context - Context description
-   * @param error - Error object
-   */
-  private logError(context: string, error: ApiError): void {
-    console.error(`[ImageGeneratorService] ${context}:`, {
-      message: error.message,
-      code: error.code,
-      status: error.status,
-      details: error.details,
-      timestamp: new Date().toISOString(),
-    });
   }
 }
 
-// Export singleton instance
 export const imageGeneratorService = new ImageGeneratorService();

@@ -21,12 +21,12 @@ export class PromptBuilderService {
   async buildPrompt(location: Coordinates, time: TimeSelection): Promise<string> {
     // Get location name (use provided name or reverse geocode)
     const locationName = location.name || await this.geocodingService.reverseGeocode(location);
-    
+
     // Generate historical context
     const historicalContext = this.getHistoricalContext(time, locationName);
-    
+
     // Format the prompt for image generation
-    const prompt = `A photorealistic historical scene of ${locationName} in ${time.displayName}. ${historicalContext}. Atmospheric lighting with dramatic shadows, moody twilight sky, cinematic composition. Historically accurate architecture, clothing, and technology of the era. High detail, professional photography style.`;
+    const prompt = `A spooky, scary, photorealistic historical scene of ${locationName} in ${time.displayName}. ${historicalContext}. Halloween atmosphere, eerie fog, dark shadows, haunted ambiance, mysterious and supernatural vibes. Atmospheric lighting with dramatic shadows, moody twilight sky, cinematic composition. Historically accurate architecture, clothing, and technology of the era. High detail, professional photography style.`;
 
     return prompt;
   }

@@ -11,6 +11,7 @@ interface ControlsTabsProps {
   onTimeChange: (time: TimeSelection) => void;
   onEventSelect: (event: NotableEvent) => void;
   onImageGenerated: (image: GeneratedImage) => void;
+  onStoryGenerated: (data: { title: string; story: string }) => void;
   onError: (error: string) => void;
 }
 
@@ -22,6 +23,7 @@ export function ControlsTabs({
   onTimeChange,
   onEventSelect,
   onImageGenerated,
+  onStoryGenerated,
   onError,
 }: ControlsTabsProps) {
   const [activeTab, setActiveTab] = useState<TabId>('time');
@@ -80,6 +82,7 @@ export function ControlsTabs({
           selectedLocation={selectedLocation}
           selectedTime={selectedTime}
           onImageGenerated={onImageGenerated}
+          onStoryGenerated={onStoryGenerated}
           onError={onError}
         />
       </div>

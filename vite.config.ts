@@ -26,4 +26,13 @@ export default defineConfig({
   optimizeDeps: {
     include: ['react', 'react-dom', 'three', '@react-three/fiber', '@react-three/drei'],
   },
+  server: {
+    proxy: {
+      '/hf-api': {
+        target: 'https://router.huggingface.co',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/hf-api/, ''),
+      },
+    },
+  },
 })

@@ -117,7 +117,8 @@
   align-items: center;
   gap: 0.75rem;
   min-height: 0;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* Search container */
