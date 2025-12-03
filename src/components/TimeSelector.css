@@ -1,0 +1,246 @@
+.time-selector {
+  position: relative;
+  background: linear-gradient(135deg, rgba(26, 10, 46, 0.9) 0%, rgba(13, 13, 13, 0.95) 100%);
+  border: 1px solid rgba(157, 78, 221, 0.3);
+  border-radius: 12px;
+  padding: 1.25rem;
+  backdrop-filter: blur(10px);
+  overflow: hidden;
+}
+
+.time-selector::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(157, 78, 221, 0.5), transparent);
+}
+
+.time-selector-header {
+  text-align: center;
+  margin-bottom: 0.75rem;
+}
+
+.time-selector-title {
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 1.1rem;
+  color: #e0aaff;
+  margin: 0 0 0.25rem 0;
+  letter-spacing: 1px;
+}
+
+.time-selector-subtitle {
+  font-family: Georgia, serif;
+  font-size: 0.85rem;
+  color: #ff6b35;
+  font-style: italic;
+  margin: 0;
+  opacity: 0.9;
+}
+
+.time-selector-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Era Toggle */
+.era-toggle-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.era-label,
+.control-label {
+  font-size: 0.75rem;
+  color: #9d4edd;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 500;
+}
+
+.era-toggle {
+  display: flex;
+  gap: 0.5rem;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 0.25rem;
+  border-radius: 8px;
+  border: 1px solid rgba(157, 78, 221, 0.2);
+}
+
+.era-button {
+  flex: 1;
+  padding: 0.6rem 1rem;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: #b8b8b8;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.era-button:hover {
+  background: rgba(157, 78, 221, 0.1);
+  color: #e0aaff;
+}
+
+.era-button.active {
+  background: linear-gradient(135deg, rgba(157, 78, 221, 0.3) 0%, rgba(157, 78, 221, 0.15) 100%);
+  border-color: rgba(157, 78, 221, 0.5);
+  color: #fff;
+}
+
+/* Year Controls */
+.year-control-container,
+.month-control-container,
+.day-control-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.year-input-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.year-input {
+  flex: 1;
+  padding: 0.6rem 0.75rem;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(157, 78, 221, 0.3);
+  border-radius: 6px;
+  color: #e0aaff;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1rem;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.year-input:focus {
+  outline: none;
+  border-color: #9d4edd;
+  box-shadow: 0 0 0 2px rgba(157, 78, 221, 0.2);
+}
+
+.era-indicator {
+  font-size: 0.9rem;
+  color: #ff6b35;
+  font-weight: 600;
+  min-width: 2.5rem;
+  text-align: center;
+}
+
+.year-slider {
+  width: 100%;
+  height: 6px;
+  background: linear-gradient(to right, rgba(255, 107, 53, 0.3), rgba(157, 78, 221, 0.3));
+  border-radius: 3px;
+  outline: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.year-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  background: #9d4edd;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(157, 78, 221, 0.6);
+  transition: transform 0.2s ease;
+}
+
+.year-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+.year-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: #9d4edd;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(157, 78, 221, 0.6);
+}
+
+.slider-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  color: rgba(157, 78, 221, 0.6);
+  padding: 0 0.25rem;
+}
+
+/* Selects */
+.month-select,
+.day-select {
+  padding: 0.6rem 0.75rem;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(157, 78, 221, 0.3);
+  border-radius: 6px;
+  color: #e0aaff;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.month-select:focus,
+.day-select:focus {
+  outline: none;
+  border-color: #9d4edd;
+  box-shadow: 0 0 0 2px rgba(157, 78, 221, 0.2);
+}
+
+.month-select option,
+.day-select option {
+  background: #1a0a2e;
+  color: #e0aaff;
+}
+
+/* Time Display */
+.time-display {
+  margin-top: 0.75rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, rgba(255, 107, 53, 0.1) 0%, rgba(0, 0, 0, 0.4) 100%);
+  border: 1px solid rgba(255, 107, 53, 0.3);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.time-display-label {
+  font-size: 0.7rem;
+  color: #ff6b35;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 0.25rem;
+}
+
+.time-display-value {
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 1.2rem;
+  color: #fff;
+  text-shadow: 0 0 10px rgba(255, 107, 53, 0.4);
+}
+
+/* Hide wisps for cleaner look */
+.wisp {
+  display: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .time-selector {
+    padding: 1rem;
+  }
+  .time-selector-title {
+    font-size: 1rem;
+  }
+}

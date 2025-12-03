@@ -1,0 +1,169 @@
+.candlelight-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.candlelight {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    var(--color-red-crimson) 0%,
+    var(--color-red-blood) 30%,
+    transparent 70%
+  );
+  opacity: 0.15;
+  filter: blur(20px);
+}
+
+.candlelight-top-left {
+  top: -50px;
+  left: -50px;
+  animation: flicker-1 2s ease-in-out infinite;
+}
+
+.candlelight-top-right {
+  top: -50px;
+  right: -50px;
+  animation: flicker-2 2.3s ease-in-out infinite;
+}
+
+.candlelight-bottom-left {
+  bottom: -50px;
+  left: -50px;
+  animation: flicker-3 1.8s ease-in-out infinite;
+}
+
+.candlelight-bottom-right {
+  bottom: -50px;
+  right: -50px;
+  animation: flicker-4 2.1s ease-in-out infinite;
+}
+
+/* Flickering candlelight animations with random patterns */
+@keyframes flicker-1 {
+  0%, 100% {
+    opacity: 0.15;
+    transform: scale(1);
+  }
+  10% {
+    opacity: 0.12;
+    transform: scale(0.95);
+  }
+  20% {
+    opacity: 0.18;
+    transform: scale(1.05);
+  }
+  30% {
+    opacity: 0.14;
+    transform: scale(0.98);
+  }
+  50% {
+    opacity: 0.16;
+    transform: scale(1.02);
+  }
+  70% {
+    opacity: 0.13;
+    transform: scale(0.96);
+  }
+  85% {
+    opacity: 0.17;
+    transform: scale(1.03);
+  }
+}
+
+@keyframes flicker-2 {
+  0%, 100% {
+    opacity: 0.14;
+    transform: scale(1);
+  }
+  15% {
+    opacity: 0.17;
+    transform: scale(1.04);
+  }
+  35% {
+    opacity: 0.12;
+    transform: scale(0.94);
+  }
+  55% {
+    opacity: 0.16;
+    transform: scale(1.01);
+  }
+  75% {
+    opacity: 0.13;
+    transform: scale(0.97);
+  }
+  90% {
+    opacity: 0.15;
+    transform: scale(1.02);
+  }
+}
+
+@keyframes flicker-3 {
+  0%, 100% {
+    opacity: 0.16;
+    transform: scale(1);
+  }
+  12% {
+    opacity: 0.13;
+    transform: scale(0.96);
+  }
+  28% {
+    opacity: 0.18;
+    transform: scale(1.06);
+  }
+  45% {
+    opacity: 0.14;
+    transform: scale(0.99);
+  }
+  65% {
+    opacity: 0.17;
+    transform: scale(1.03);
+  }
+  82% {
+    opacity: 0.15;
+    transform: scale(1.01);
+  }
+}
+
+@keyframes flicker-4 {
+  0%, 100% {
+    opacity: 0.15;
+    transform: scale(1);
+  }
+  18% {
+    opacity: 0.18;
+    transform: scale(1.05);
+  }
+  32% {
+    opacity: 0.13;
+    transform: scale(0.95);
+  }
+  48% {
+    opacity: 0.16;
+    transform: scale(1.02);
+  }
+  68% {
+    opacity: 0.14;
+    transform: scale(0.98);
+  }
+  88% {
+    opacity: 0.17;
+    transform: scale(1.04);
+  }
+}
+
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .candlelight {
+    animation: none;
+    opacity: 0.15;
+  }
+}

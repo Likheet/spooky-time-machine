@@ -1,0 +1,109 @@
+.generation-control-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  background: linear-gradient(135deg, rgba(26, 10, 46, 0.9) 0%, rgba(13, 13, 13, 0.95) 100%);
+  border: 1px solid rgba(157, 78, 221, 0.3);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+}
+
+.generate-button {
+  position: relative;
+  width: 100%;
+  padding: 1rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: 2px solid #9d4edd;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(157, 78, 221, 0.25) 0%, rgba(157, 78, 221, 0.1) 100%);
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  text-shadow: 0 0 10px rgba(157, 78, 221, 0.5);
+}
+
+.generate-button.enabled:hover {
+  background: linear-gradient(135deg, rgba(157, 78, 221, 0.4) 0%, rgba(157, 78, 221, 0.2) 100%);
+  border-color: #b8a0ff;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(157, 78, 221, 0.4);
+}
+
+.generate-button.enabled:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 12px rgba(157, 78, 221, 0.3);
+}
+
+.generate-button.disabled {
+  border-color: #444;
+  color: #666;
+  cursor: not-allowed;
+  opacity: 0.5;
+  text-shadow: none;
+  background: rgba(30, 30, 30, 0.5);
+}
+
+.button-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.button-icon {
+  font-size: 1.3rem;
+}
+
+.button-text {
+  letter-spacing: 0.05em;
+}
+
+/* Loading */
+.loading-indicator {
+  display: inline-block;
+  animation: spin 1.5s linear infinite;
+}
+
+.pentagram {
+  font-size: 1.3rem;
+  color: #9d4edd;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Hint */
+.hint-text {
+  margin: 0;
+  color: #ff6b35;
+  font-size: 0.8rem;
+  font-style: italic;
+  text-align: center;
+  opacity: 0.9;
+}
+
+/* Focus */
+.generate-button:focus-visible {
+  outline: 2px solid #9d4edd;
+  outline-offset: 3px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .generation-control-panel {
+    padding: 1rem;
+  }
+  .generate-button {
+    padding: 0.875rem 1.25rem;
+    font-size: 0.95rem;
+  }
+}

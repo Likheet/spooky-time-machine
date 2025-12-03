@@ -1,0 +1,137 @@
+.controls-tabs {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(26, 10, 46, 0.9) 0%, rgba(13, 13, 13, 0.95) 100%);
+  border: 1px solid rgba(157, 78, 221, 0.3);
+  border-radius: 12px;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+
+/* Tab navigation */
+.tabs-nav {
+  display: flex;
+  border-bottom: 1px solid rgba(157, 78, 221, 0.2);
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.tab-button {
+  flex: 1;
+  padding: 0.875rem 0.5rem;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #888;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.tab-button:hover {
+  color: #e0aaff;
+  background: rgba(157, 78, 221, 0.1);
+}
+
+.tab-button.active {
+  color: #fff;
+  border-bottom-color: #9d4edd;
+  background: rgba(157, 78, 221, 0.15);
+}
+
+.tab-button:focus-visible {
+  outline: 2px solid #9d4edd;
+  outline-offset: -2px;
+}
+
+/* Tab content */
+.tabs-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.tab-panel {
+  display: none;
+  padding: 1rem;
+}
+
+.tab-panel.active {
+  display: block;
+  animation: fade-in 0.2s ease-out;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Override child component styles to remove their containers */
+.tab-panel .time-selector,
+.tab-panel .event-randomizer {
+  background: transparent;
+  border: none;
+  padding: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.tab-panel .time-selector::before,
+.tab-panel .event-randomizer::before {
+  display: none;
+}
+
+/* Generate section */
+.generate-section {
+  padding: 1rem;
+  border-top: 1px solid rgba(157, 78, 221, 0.2);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.generate-section .generation-control-panel {
+  background: transparent;
+  border: none;
+  padding: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+/* Custom scrollbar */
+.tabs-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.tabs-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tabs-content::-webkit-scrollbar-thumb {
+  background: rgba(157, 78, 221, 0.4);
+  border-radius: 2px;
+}
+
+.tabs-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(157, 78, 221, 0.6);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .tab-button {
+    padding: 0.75rem 0.25rem;
+    font-size: 0.8rem;
+  }
+
+  .tab-panel {
+    padding: 0.75rem;
+  }
+
+  .generate-section {
+    padding: 0.75rem;
+  }
+}
